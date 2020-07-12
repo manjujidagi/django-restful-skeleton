@@ -1,18 +1,24 @@
-# from django.shortcuts import render
-
 # Create your views here.
-from rest_framework import viewsets
-from . import models
-from . import serializers
+from rental.models import Friend, Belonging, Borrowed
+from rental.serializers import FriendSerializer, BelongingSerializer, BorrowedSerializer
 
-class FriendViewset(viewsets.ModelViewSet):
-    queryset = models.Friend.objects.all()
-    serializer_class = serializers.FriendSerializer
 
-class BelongingViewset(viewsets.ModelViewSet):
-    queryset = models.Belonging.objects.all()
-    serializer_class = serializers.BelongingSerializer
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.parsers import JSONParser
 
-class BorrowedViewset(viewsets.ModelViewSet):
-    queryset = models.Borrowed.objects.all()
-    serializer_class = serializers.BorrowedSerializer
+@csrf_exempt
+def friends_list(request):
+
+    if request.method == 'GET':
+        friends = Friend.objects.all()
+        serializer = FriendSerializer(friends, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = FriendSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
